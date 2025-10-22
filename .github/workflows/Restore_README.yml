@@ -1,0 +1,26 @@
+name: Revert README.md if updated by Figma Make
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  revert-readme:
+    if: ${{ github.actor == 'figma[bot]' }}  # figma[bot]이 푸시한 경우만 실행
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 전체 히스토리 가져오기 (restore에 필요)
+
+      - name: Restore README.md from previous commit
+        run: |
+          # 이전 커밋의 README.md를 복원
+          git restore -s HEAD~1 -- README.md || echo "No previous README found"
+          git diff --quiet || (
+            git config user.name "github-actions[bot]" &&
+            git config user.email "github-actions[bot]@users.noreply.github.com" &&
+            git commit -am "Revert README.md overwritten by Figma Make" &&
+            git push
+          )
